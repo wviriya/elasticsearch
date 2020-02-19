@@ -1,0 +1,280 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+    es.service: data01
+  name: data01
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: managed-premium
+  resources:
+    requests:
+      storage: 30Gi
+status: {}
+---
+
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    es.service: es01
+  name: es01
+spec:
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        es.service: es01
+    spec:
+      containers:
+      - env:
+        - name: ES_JAVA_OPTS
+          value: -Xms512m -Xmx512m
+        - name: bootstrap.memory_lock
+          value: "true"
+        - name: cluster.initial_master_nodes
+          value: es01,es02,es03
+        - name: cluster.name
+          value: es-docker-cluster
+        - name: discovery.seed_hosts
+          value: es02,es03
+        - name: node.name
+          value: es01
+        image: elasticsearch:1.7.2
+        name: es01
+        livenessProbe:
+          httpGet:
+              path: /
+              port: 9200
+          initialDelaySeconds: 30
+          periodSeconds: 20
+          timeoutSeconds: 10
+          failureThreshold: 3
+        imagePullPolicy: Always
+        ports:
+          - containerPort: 9200
+        resources:
+          requests:
+            cpu: 1000m
+            memory: 4Gi
+          limits:
+            cpu: 2000m
+            memory: 6Gi
+        volumeMounts:
+        - mountPath: /usr/share/elasticsearch/data
+          name: data01
+      restartPolicy: Always
+      volumes:
+      - name: data01
+        persistentVolumeClaim:
+          claimName: data01
+status: {}
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: es01
+  labels:
+    es.service: es01
+spec:
+  ports:
+  - name: https
+    port: 443
+    targetPort: 9200
+  selector:
+    es.service: es01
+---
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+    es.service: data02
+  name: data02
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: managed-premium
+  resources:
+    requests:
+      storage: 30Gi
+status: {}
+---
+
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    es.service: es02
+  name: es02
+spec:
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        es.service: es02
+    spec:
+      containers:
+      - env:
+        - name: ES_JAVA_OPTS
+          value: -Xms512m -Xmx512m
+        - name: bootstrap.memory_lock
+          value: "true"
+        - name: cluster.initial_master_nodes
+          value: es01,es02,es03
+        - name: cluster.name
+          value: es-docker-cluster
+        - name: discovery.seed_hosts
+          value: es01,es03
+        - name: node.name
+          value: es02
+        image: elasticsearch:1.7.2
+        name: es02
+        livenessProbe:
+          httpGet:
+              path: /
+              port: 9200
+          initialDelaySeconds: 30
+          periodSeconds: 20
+          timeoutSeconds: 10
+          failureThreshold: 3
+        imagePullPolicy: Always
+        ports:
+          - containerPort: 9200
+        resources:
+          requests:
+            cpu: 1000m
+            memory: 4Gi
+          limits:
+            cpu: 2000m
+            memory: 6Gi
+        volumeMounts:
+        - mountPath: /usr/share/elasticsearch/data
+          name: data02
+      restartPolicy: Always
+      volumes:
+      - name: data02
+        persistentVolumeClaim:
+          claimName: data02
+status: {}
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: es02
+  labels:
+    es.service: es02
+spec:
+  ports:
+  - name: https
+    port: 443
+    targetPort: 9200
+  selector:
+    es.service: es02
+---
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+    es.service: data03
+  name: data03
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: managed-premium
+  resources:
+    requests:
+      storage: 30Gi
+status: {}
+---
+
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    es.service: es03
+  name: es03
+spec:
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        es.service: es03
+    spec:
+      containers:
+      - env:
+        - name: ES_JAVA_OPTS
+          value: -Xms512m -Xmx512m
+        - name: bootstrap.memory_lock
+          value: "true"
+        - name: cluster.initial_master_nodes
+          value: es01,es02,es03
+        - name: cluster.name
+          value: es-docker-cluster
+        - name: discovery.seed_hosts
+          value: es01,es02
+        - name: node.name
+          value: es03
+        image: elasticsearch:1.7.2
+        name: es03
+        livenessProbe:
+          httpGet:
+              path: /
+              port: 9200
+          initialDelaySeconds: 30
+          periodSeconds: 20
+          timeoutSeconds: 10
+          failureThreshold: 3
+        imagePullPolicy: Always
+        ports:
+          - containerPort: 9200
+        resources:
+          requests:
+            cpu: 1000m
+            memory: 4Gi
+          limits:
+            cpu: 2000m
+            memory: 6Gi
+        volumeMounts:
+        - mountPath: /usr/share/elasticsearch/data
+          name: data03
+      restartPolicy: Always
+      volumes:
+      - name: data03
+        persistentVolumeClaim:
+          claimName: data03
+status: {}
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: es03
+  labels:
+    es.service: es03
+spec:
+  ports:
+  - name: https
+    port: 443
+    targetPort: 9200
+  selector:
+    es.service: es03
